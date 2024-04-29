@@ -1,6 +1,6 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
-import { WebhookEvent } from "@clerk/nextjs/server";
+import { clerkClient, WebhookEvent } from "@clerk/nextjs/server";
 import prisma from "@/prisma";
 import { NextRequest } from "next/server";
 
@@ -51,10 +51,38 @@ export async function POST(req: NextRequest) {
   }
 
   // Get the ID and type
-  const { id } = evt.data;
+  const {
+    id,
+    email_addresses,
+    first_name,
+    gender,
+    last_name,
+    profile_image_url,
+    username,
+  } = evt.data;
   const eventType = evt.type;
 
-  
+  if (evt.type === "user.created") {
+    const user = await prisma.user.create({
+      data: {
+        clerk_Id: id as string,
+        email: email_addresses,
+        image: profile_image_url,
+        first_name: first_name,
+        last_name: last_name,
+        username: username,
+        createdAt: Date.now() as unknown as string,
+      },
+    });
+    if (user) {
+      await clerkClient.users.updateUserMetadata(id, {
+        publicMetadata: {
+          userId: user.id,
+        },
+      });
+    }
+    console.log(user);
+  }
   console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
   console.log("Webhook body:", body);
 
