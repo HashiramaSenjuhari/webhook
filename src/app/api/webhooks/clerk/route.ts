@@ -51,27 +51,28 @@ export async function POST(req: NextRequest) {
   }
 
   // Get the ID and type
-  const {
-    id,
-    email_addresses,
-    first_name,
-    gender,
-    last_name,
-    profile_image_url,
-    username,
-  } = evt.data;
+  const { id } = evt.data;
   const eventType = evt.type;
 
   if (evt.type === "user.created") {
+    const {
+      id,
+      email_addresses,
+      first_name,
+      created_at,
+      last_name,
+      image_url,
+      username,
+    } = evt.data;
     const user = await prisma.user.create({
       data: {
         clerk_Id: id as string,
-        email: email_addresses,
-        image: profile_image_url,
-        first_name: first_name,
-        last_name: last_name,
-        username: username,
-        createdAt: Date.now() as unknown as string,
+        email: email_addresses[0].email_address,
+        image: image_url,
+        first_name: first_name as string,
+        last_name: last_name as string,
+        username: username as string,
+        createdAt: created_at as unknown as string,
       },
     });
     if (user) {
